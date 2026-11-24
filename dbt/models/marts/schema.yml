@@ -11,6 +11,11 @@ models:
     columns:
       - name: product_id
         tests: [unique, not_null]
+      - name: category
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Accessories', 'Electronics', 'Furniture']
 
   - name: dim_date
     columns:

@@ -96,8 +96,26 @@ def retail_pipeline():
         finally:
             con.close()
 
+    @task
+    def export_monthly_revenue() -> None:
+        import duckdb
+
+        out_dir = LAB_HOME / "data" / "export"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / "monthly_revenue.csv"
+
+        con = duckdb.connect(str(DB_PATH), read_only=True)
+        try:
+            con.execute(f"""
+                COPY (SELECT * FROM dw.mart_monthly_revenue ORDER BY ym, revenue DESC)
+                TO '{out_file}' (HEADER, DELIMITER ',')
+            """)
+            print(f"Wrote {out_file}")
+        finally:
+            con.close()
+
     loaded = extract_load(check_source_files())
-    loaded >> dbt_run >> dbt_test >> report()
+    loaded >> dbt_run >> dbt_test >> report() >> export_monthly_revenue()
 
 
 retail_pipeline()
